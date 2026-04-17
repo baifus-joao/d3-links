@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: d3-links
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: BASE_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false

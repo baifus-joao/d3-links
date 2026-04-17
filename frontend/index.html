@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D3 Links Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="rail">
+        <button class="rail__item is-active" type="button" data-scroll-target="overview-card" aria-label="Overview">OV</button>
+        <button class="rail__item" type="button" data-scroll-target="ranking-card" aria-label="Ranking">RK</button>
+        <button class="rail__item" type="button" data-scroll-target="detail-card" aria-label="Detalhe">DT</button>
+        <button class="rail__item" type="button" data-scroll-target="create-card" aria-label="Criar origem">+</button>
+      </aside>
+
+      <div class="workspace">
+        <header class="topbar">
+          <div class="topbar__brand">
+            <span class="topbar__brand-mark">D3</span>
+            <div>
+              <strong>D3 Links Intelligence</strong>
+              <span>Operational access dashboard</span>
+            </div>
+          </div>
+
+          <label class="topbar__search">
+            <input id="search-input" type="search" placeholder="Buscar loja, campanha ou tag..." />
+          </label>
+
+          <div class="topbar__status">
+            <span class="status-pill">Live analytics</span>
+            <span class="status-pill">FastAPI</span>
+          </div>
+        </header>
+
+        <main class="content">
+          <div class="content-grid">
+            <section class="panel hero-card" id="overview-card">
+              <span class="panel__eyebrow">Overview</span>
+              <h1>Inteligencia operacional por origem de acesso.</h1>
+              <p id="hero-period-text">
+                Acompanhe rapidamente quais unidades e campanhas puxam mais trafego, como a demanda evolui e onde agir.
+              </p>
+
+              <div class="hero-card__grid">
+                <div class="hero-card__stat">
+                  <span>Link lider</span>
+                  <strong id="hero-top-link">-</strong>
+                </div>
+                <div class="hero-card__stat">
+                  <span>Origem dominante</span>
+                  <strong id="hero-top-source">-</strong>
+                </div>
+                <div class="hero-card__stat">
+                  <span>Janela analisada</span>
+                  <strong id="hero-range-label">-</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel controls-card">
+              <div class="panel__header">
+                <span class="panel__eyebrow">Periodo</span>
+                <h2>Filtros da leitura</h2>
+              </div>
+
+              <form id="filters-form" class="stack">
+                <div class="controls-card__fields">
+                  <label class="field">
+                    <span>Inicio</span>
+                    <input id="filter-start" type="date" name="start_date" />
+                  </label>
+                  <label class="field">
+                    <span>Fim</span>
+                    <input id="filter-end" type="date" name="end_date" />
+                  </label>
+                </div>
+
+                <div class="quick-range">
+                  <button class="range-chip" type="button" data-range-days="1">Hoje</button>
+                  <button class="range-chip" type="button" data-range-days="7">7 dias</button>
+                  <button class="range-chip" type="button" data-range-days="30">30 dias</button>
+                </div>
+
+                <button type="submit" class="button button--primary">Atualizar painel</button>
+              </form>
+
+              <div class="controls-card__note">
+                <span id="period-feedback">Janela pronta para leitura operacional.</span>
+              </div>
+            </section>
+
+            <article class="panel metric-card">
+              <span class="metric-card__label">Cliques no periodo</span>
+              <strong id="metric-period-clicks">0</strong>
+              <p id="metric-period-change">Sem comparativo ainda.</p>
+            </article>
+
+            <article class="panel metric-card">
+              <span class="metric-card__label">Origens ativas</span>
+              <strong id="metric-active-links">0</strong>
+              <p id="metric-total-links">0 links cadastrados</p>
+            </article>
+
+            <article class="panel metric-card">
+              <span class="metric-card__label">Link mais acessado</span>
+              <strong id="metric-top-link">-</strong>
+              <p id="metric-top-link-clicks">0 cliques</p>
+            </article>
+
+            <article class="panel metric-card">
+              <span class="metric-card__label">Canal dominante</span>
+              <strong id="metric-top-source">-</strong>
+              <p id="metric-top-source-clicks">0 cliques</p>
+            </article>
+
+            <section class="panel trend-card">
+              <div class="panel__header panel__header--between">
+                <div>
+                  <span class="panel__eyebrow">Tendencia</span>
+                  <h2>Uso por dia</h2>
+                </div>
+                <p class="panel__muted">Leitura consolidada do periodo filtrado.</p>
+              </div>
+              <div id="overview-trend" class="trend-mount"></div>
+            </section>
+
+            <section class="panel sources-card">
+              <div class="panel__header">
+                <span class="panel__eyebrow">Origens</span>
+                <h2>Distribuicao de canais</h2>
+              </div>
+              <div id="overview-sources" class="distribution-list"></div>
+            </section>
+
+            <section class="panel ranking-card" id="ranking-card">
+              <div class="panel__header panel__header--between">
+                <div>
+                  <span class="panel__eyebrow">Ranking</span>
+                  <h2>Unidades e campanhas lideres</h2>
+                </div>
+                <p class="panel__muted">Selecione uma origem para abrir o drill-down.</p>
+              </div>
+              <div id="overview-ranking" class="ranking-list"></div>
+            </section>
+
+            <section class="panel recent-card">
+              <div class="panel__header">
+                <span class="panel__eyebrow">Feed</span>
+                <h2>Ultimos acessos</h2>
+              </div>
+              <div id="overview-recent" class="recent-list"></div>
+            </section>
+
+            <section class="panel detail-card" id="detail-card">
+              <div class="panel__header panel__header--between">
+                <div>
+                  <span class="panel__eyebrow">Drill-down</span>
+                  <h2 id="detail-title">Selecione uma origem</h2>
+                </div>
+                <div class="detail-actions">
+                  <a id="open-link" class="button button--ghost" href="#" target="_blank" rel="noreferrer">Abrir link</a>
+                  <a id="export-link" class="button button--ghost" href="#">Exportar CSV</a>
+                </div>
+              </div>
+
+              <div id="detail-empty" class="empty-state">
+                Clique em uma linha do ranking ou em um card de link para abrir a analise individual.
+              </div>
+
+              <div id="detail-content" class="detail-layout hidden">
+                <div class="detail-layout__summary">
+                  <article class="detail-tile">
+                    <span>Cliques filtrados</span>
+                    <strong id="detail-total-clicks">0</strong>
+                  </article>
+                  <article class="detail-tile">
+                    <span>Mobile</span>
+                    <strong id="detail-mobile-clicks">0</strong>
+                  </article>
+                  <article class="detail-tile">
+                    <span>Desktop</span>
+                    <strong id="detail-desktop-clicks">0</strong>
+                  </article>
+                  <article class="detail-tile detail-tile--qr">
+                    <span>QR Code operacional</span>
+                    <img id="qr-preview" alt="QR Code da origem selecionada" />
+                  </article>
+                </div>
+
+                <div class="detail-layout__charts">
+                  <article class="subpanel">
+                    <div class="subpanel__header">
+                      <h3>Volume diario</h3>
+                      <span>Periodo atual</span>
+                    </div>
+                    <div id="detail-days" class="trend-mount"></div>
+                  </article>
+
+                  <article class="subpanel">
+                    <div class="subpanel__header">
+                      <h3>Fontes da origem</h3>
+                      <span>Distribuicao</span>
+                    </div>
+                    <div id="detail-sources" class="distribution-list"></div>
+                  </article>
+                </div>
+
+                <article class="subpanel">
+                  <div class="subpanel__header">
+                    <h3>Ultimos acessos da origem</h3>
+                    <span>Leitura tatica</span>
+                  </div>
+                  <div id="detail-recent" class="recent-list"></div>
+                </article>
+              </div>
+            </section>
+
+            <section class="panel create-card" id="create-card">
+              <div class="panel__header">
+                <span class="panel__eyebrow">Cadastro</span>
+                <h2>Nova origem analitica</h2>
+              </div>
+              <form id="link-form" class="stack">
+                <label class="field">
+                  <span>URL de destino</span>
+                  <input type="url" name="original_url" placeholder="https://wa.me/..." required />
+                </label>
+                <label class="field">
+                  <span>Slug / short code</span>
+                  <input type="text" name="short_code" placeholder="matriz" required />
+                </label>
+                <label class="field">
+                  <span>Descricao operacional</span>
+                  <textarea name="description" rows="3" placeholder="QR Code Loja Matriz"></textarea>
+                </label>
+                <label class="field">
+                  <span>Tags</span>
+                  <input type="text" name="tags" placeholder="loja, qr, whatsapp" />
+                </label>
+                <button type="submit" class="button button--primary">Cadastrar origem</button>
+                <p id="form-feedback" class="feedback" aria-live="polite"></p>
+              </form>
+            </section>
+
+            <section class="panel links-card">
+              <div class="panel__header panel__header--between">
+                <div>
+                  <span class="panel__eyebrow">Inventario</span>
+                  <h2>Mapa de links monitorados</h2>
+                </div>
+                <p class="panel__muted">Busca da barra superior filtra loja, campanha e tags.</p>
+              </div>
+              <div id="links-list" class="links-grid"></div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
