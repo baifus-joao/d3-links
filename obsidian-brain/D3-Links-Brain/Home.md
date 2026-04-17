@@ -31,5 +31,6 @@
 - A home agora prioriza leitura executiva: lideres, tendencia, canais, feed recente e drill-down por origem
 - O bootstrap do banco agora normaliza URLs Postgres da Render para usar o driver `psycopg`
 - O cadastro de links agora converte `short_code` digitado com espacos ou acentos para slug automaticamente
+- O dashboard agora permite gerenciar links ja criados: editar e excluir sem sair da interface principal
 - A camada atual esta pronta para evoluir para autenticacao leve, jobs assincronos e BI mais pesado
 - A raiz da aplicacao (`/`) agora direciona o usuario direto para o dashboard

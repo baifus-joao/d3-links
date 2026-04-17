@@ -25,6 +25,17 @@ class LinkRepository:
         db.flush()
         return link
 
+    def update(self, db: Session, link: Link, **fields) -> Link:
+        for field, value in fields.items():
+            setattr(link, field, value)
+        db.add(link)
+        db.flush()
+        return link
+
+    def delete(self, db: Session, link: Link) -> None:
+        db.delete(link)
+        db.flush()
+
     def get_by_id(self, db: Session, link_id: str) -> Link | None:
         return db.get(Link, link_id)
 

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.config import get_settings
 from backend.app.repositories.click_repository import ClickRepository
 from backend.app.repositories.link_repository import LinkRepository
-from backend.app.schemas.link import LinkCreate, LinkRead, LinkSummary
+from backend.app.schemas.link import LinkCreate, LinkRead, LinkSummary, LinkUpdate
 
 
 class LinkNotFoundError(Exception):
@@ -39,6 +39,29 @@ class LinkService:
     def list_links(self, db: Session) -> list[LinkRead]:
         rows = self.link_repository.list_with_click_counts(db)
         return [self._serialize_link(link, total_clicks=total_clicks) for link, total_clicks in rows]
+
+    def update_link(self, db: Session, link_id: str, payload: LinkUpdate) -> LinkRead:
+        link = self.get_link_entity(db, link_id)
+        updates = payload.model_dump(exclude_unset=True)
+
+        if "original_url" in updates:
+            updates["original_url"] = str(updates["original_url"])
+
+        if "short_code" in updates:
+            existing = self.link_repository.get_by_short_code(db, updates["short_code"])
+            if existing and existing.id != link.id:
+                raise LinkAlreadyExistsError(updates["short_code"])
+
+        updated = self.link_repository.update(db, link, **updates)
+        db.commit()
+        db.refresh(updated)
+        total_clicks = self.click_repository.count_for_link(db, updated.id)
+        return self._serialize_link(updated, total_clicks=total_clicks)
+
+    def delete_link(self, db: Session, link_id: str) -> None:
+        link = self.get_link_entity(db, link_id)
+        self.link_repository.delete(db, link)
+        db.commit()
 
     def get_link_detail(self, db: Session, link_id: str) -> LinkRead:
         row = self.link_repository.get_with_click_count(db, link_id)

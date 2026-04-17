@@ -15,6 +15,8 @@
 - `POST /links`
 - `GET /links`
 - `GET /links/{id}`
+- `PATCH /links/{id}`
+- `DELETE /links/{id}`
 - `GET /links/{id}/stats`
 - `GET /links/{id}/clicks/export`
 - `GET /links/{id}/qr-code`
@@ -30,5 +32,6 @@
 - As informacoes institucionais da API ficam em `GET /api-info`
 - O endpoint de exportacao CSV sera pensado para consumo por BI e planilhas
 - `GET /analytics/overview` entrega ranking, tendencia diaria, distribuicao por origem, distribuicao por dispositivo e feed recente
+- O dashboard permite editar URL, slug, descricao e tags de cada link, alem de excluir a origem com confirmacao
 - `GET /links/{id}/stats` e `GET /links/{id}/clicks/export` aceitam `start_date` e `end_date`
 - O retorno de stats inclui total, serie diaria, distribuicao por dispositivo, distribuicao por origem e ultimos acessos

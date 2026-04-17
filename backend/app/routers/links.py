@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from backend.app.database.session import get_db
-from backend.app.schemas.link import LinkCreate, LinkRead, LinkStats
+from backend.app.schemas.link import LinkCreate, LinkRead, LinkStats, LinkUpdate
 from backend.app.services.analytics_service import AnalyticsService
 from backend.app.services.link_service import LinkAlreadyExistsError, LinkNotFoundError, LinkService
 
@@ -41,6 +41,25 @@ def get_link(link_id: str, db: Session = Depends(get_db)) -> LinkRead:
         return link_service.get_link_detail(db, link_id)
     except LinkNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="link nao encontrado") from exc
+
+
+@router.patch("/{link_id}", response_model=LinkRead)
+def update_link(link_id: str, payload: LinkUpdate, db: Session = Depends(get_db)) -> LinkRead:
+    try:
+        return link_service.update_link(db, link_id, payload)
+    except LinkNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="link nao encontrado") from exc
+    except LinkAlreadyExistsError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"short_code '{exc.args[0]}' ja existe") from exc
+
+
+@router.delete("/{link_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_link(link_id: str, db: Session = Depends(get_db)) -> Response:
+    try:
+        link_service.delete_link(db, link_id)
+    except LinkNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="link nao encontrado") from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/{link_id}/stats", response_model=LinkStats)

@@ -3,6 +3,7 @@ const state = {
   overview: null,
   selectedLinkId: null,
   searchTerm: "",
+  editingLinkId: null,
 };
 
 const refs = {
@@ -38,9 +39,14 @@ const refs = {
   detailRecent: document.querySelector("#detail-recent"),
   openLink: document.querySelector("#open-link"),
   exportLink: document.querySelector("#export-link"),
+  editLink: document.querySelector("#edit-link"),
+  deleteLink: document.querySelector("#delete-link"),
   qrPreview: document.querySelector("#qr-preview"),
   linksList: document.querySelector("#links-list"),
   linkForm: document.querySelector("#link-form"),
+  linkFormTitle: document.querySelector("#link-form-title"),
+  linkFormSubmit: document.querySelector("#link-form-submit"),
+  linkFormCancel: document.querySelector("#link-form-cancel"),
   formFeedback: document.querySelector("#form-feedback"),
 };
 
@@ -192,6 +198,50 @@ function setFeedback(message, type = "") {
   if (type) {
     refs.formFeedback.classList.add(`feedback--${type}`);
   }
+}
+
+function getSelectedLink() {
+  return state.links.find((link) => link.id === state.selectedLinkId) || null;
+}
+
+function syncFormMode() {
+  const isEditing = Boolean(state.editingLinkId);
+  refs.linkFormTitle.textContent = isEditing ? "Editar origem analitica" : "Nova origem analitica";
+  refs.linkFormSubmit.textContent = isEditing ? "Salvar alteracoes" : "Cadastrar origem";
+  refs.linkFormCancel.classList.toggle("hidden", !isEditing);
+}
+
+function fillLinkForm(link) {
+  refs.linkForm.elements.namedItem("original_url").value = link.original_url;
+  refs.linkForm.elements.namedItem("short_code").value = link.short_code;
+  refs.linkForm.elements.namedItem("description").value = link.description || "";
+  refs.linkForm.elements.namedItem("tags").value = (link.tags || []).join(", ");
+}
+
+function resetLinkForm() {
+  state.editingLinkId = null;
+  refs.linkForm.reset();
+  syncFormMode();
+  setFeedback("");
+}
+
+function enterEditMode(linkId) {
+  const link = state.links.find((item) => item.id === linkId);
+  if (!link) {
+    return;
+  }
+  state.editingLinkId = link.id;
+  state.selectedLinkId = link.id;
+  fillLinkForm(link);
+  syncFormMode();
+  setFeedback(`Editando /${link.short_code}`);
+  document.getElementById("create-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function syncDetailActions() {
+  const hasSelection = Boolean(state.selectedLinkId);
+  refs.editLink.disabled = !hasSelection;
+  refs.deleteLink.disabled = !hasSelection;
 }
 
 function getFilteredLinks() {
@@ -371,6 +421,8 @@ function renderLinks() {
             <span class="mono">${link.short_url}</span>
             <div class="link-card__actions">
               <button class="mini-button" type="button" data-action="copy" data-value="${link.short_url}">Copiar</button>
+              <button class="mini-button" type="button" data-action="edit" data-link-id="${link.id}">Editar</button>
+              <button class="mini-button mini-button--danger" type="button" data-action="delete" data-link-id="${link.id}">Excluir</button>
               <a class="mini-button" href="${link.short_url}" target="_blank" rel="noreferrer">Abrir</a>
             </div>
           </div>
@@ -414,6 +466,7 @@ async function loadDashboard() {
 
   renderOverview();
   renderLinks();
+  syncDetailActions();
   await loadLinkDetail();
 }
 
@@ -424,6 +477,7 @@ async function loadLinkDetail() {
     refs.detailTitle.textContent = "Selecione uma origem";
     refs.openLink.href = "#";
     refs.exportLink.href = "#";
+    syncDetailActions();
     return;
   }
 
@@ -440,6 +494,7 @@ async function loadLinkDetail() {
   refs.detailTotalClicks.textContent = formatNumber(stats.total_clicks);
   refs.detailMobileClicks.textContent = formatNumber(mobile);
   refs.detailDesktopClicks.textContent = formatNumber(desktop);
+  syncDetailActions();
 
   renderTrendChart(refs.detailDays, stats.clicks_by_day);
   renderDistribution(refs.detailSources, stats.clicks_by_source, "Sem distribuicao de origem para esta unidade.");
@@ -509,6 +564,21 @@ refs.linksList.addEventListener("click", async (event) => {
     return;
   }
 
+  const editButton = event.target.closest("[data-action='edit']");
+  if (editButton) {
+    event.stopPropagation();
+    enterEditMode(editButton.dataset.linkId);
+    renderLinks();
+    return;
+  }
+
+  const deleteButton = event.target.closest("[data-action='delete']");
+  if (deleteButton) {
+    event.stopPropagation();
+    await deleteLink(deleteButton.dataset.linkId);
+    return;
+  }
+
   const target = event.target.closest("[data-link-id]");
   if (!target) {
     return;
@@ -517,6 +587,52 @@ refs.linksList.addEventListener("click", async (event) => {
   state.selectedLinkId = target.dataset.linkId;
   renderLinks();
   await loadLinkDetail();
+});
+
+async function deleteLink(linkId) {
+  const link = state.links.find((item) => item.id === linkId);
+  if (!link) {
+    return;
+  }
+
+  const confirmed = window.confirm(`Excluir /${link.short_code}? Os cliques historicos dessa origem tambem serao removidos.`);
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    setFeedback(`Excluindo /${link.short_code}...`);
+    await api(`/links/${link.id}`, { method: "DELETE" });
+    if (state.selectedLinkId === link.id) {
+      state.selectedLinkId = null;
+    }
+    if (state.editingLinkId === link.id) {
+      resetLinkForm();
+    }
+    setFeedback("Origem excluida com sucesso.", "success");
+    await loadDashboard();
+  } catch (error) {
+    setFeedback(error.message, "error");
+  }
+}
+
+refs.editLink.addEventListener("click", () => {
+  if (!state.selectedLinkId) {
+    return;
+  }
+  enterEditMode(state.selectedLinkId);
+  renderLinks();
+});
+
+refs.deleteLink.addEventListener("click", async () => {
+  if (!state.selectedLinkId) {
+    return;
+  }
+  await deleteLink(state.selectedLinkId);
+});
+
+refs.linkFormCancel.addEventListener("click", () => {
+  resetLinkForm();
 });
 
 refs.linkForm.addEventListener("submit", async (event) => {
@@ -536,14 +652,15 @@ refs.linkForm.addEventListener("submit", async (event) => {
   };
 
   try {
-    setFeedback("Cadastrando origem...");
-    const created = await api("/links", {
-      method: "POST",
+    const isEditing = Boolean(state.editingLinkId);
+    setFeedback(isEditing ? "Salvando alteracoes..." : "Cadastrando origem...");
+    const saved = await api(isEditing ? `/links/${state.editingLinkId}` : "/links", {
+      method: isEditing ? "PATCH" : "POST",
       body: JSON.stringify(payload),
     });
-    state.selectedLinkId = created.id;
-    refs.linkForm.reset();
-    setFeedback("Origem cadastrada com sucesso.", "success");
+    state.selectedLinkId = saved.id;
+    resetLinkForm();
+    setFeedback(isEditing ? "Origem atualizada com sucesso." : "Origem cadastrada com sucesso.", "success");
     await loadDashboard();
   } catch (error) {
     setFeedback(error.message, "error");
@@ -551,6 +668,8 @@ refs.linkForm.addEventListener("submit", async (event) => {
 });
 
 initDefaultPeriod();
+syncFormMode();
+syncDetailActions();
 
 loadDashboard().catch((error) => {
   refs.periodFeedback.textContent = error.message;

@@ -48,6 +48,41 @@ class LinkCreate(BaseModel):
         return normalized
 
 
+class LinkUpdate(BaseModel):
+    original_url: AnyHttpUrl | None = None
+    short_code: str | None = None
+    description: str | None = Field(default=None, max_length=1000)
+    tags: list[str] | None = None
+
+    @field_validator("short_code", mode="before")
+    @classmethod
+    def normalize_short_code(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        short_code = slugify_short_code(str(value))
+        if len(short_code) < 2:
+            raise ValueError("short_code precisa gerar pelo menos 2 caracteres validos")
+        if len(short_code) > 120:
+            raise ValueError("short_code nao pode ultrapassar 120 caracteres")
+        if not SHORT_CODE_PATTERN.match(short_code):
+            raise ValueError("short_code deve conter apenas letras minusculas, numeros, hifen ou underline")
+        return short_code
+
+    @field_validator("tags")
+    @classmethod
+    def normalize_tags(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        seen: set[str] = set()
+        normalized: list[str] = []
+        for tag in value:
+            item = tag.strip().lower()
+            if item and item not in seen:
+                normalized.append(item)
+                seen.add(item)
+        return normalized
+
+
 class LinkSummary(BaseModel):
     id: str
     short_code: str

@@ -167,6 +167,8 @@
                   <h2 id="detail-title">Selecione uma origem</h2>
                 </div>
                 <div class="detail-actions">
+                  <button id="edit-link" class="button button--ghost" type="button">Editar</button>
+                  <button id="delete-link" class="button button--ghost button--danger" type="button">Excluir</button>
                   <a id="open-link" class="button button--ghost" href="#" target="_blank" rel="noreferrer">Abrir link</a>
                   <a id="export-link" class="button button--ghost" href="#">Exportar CSV</a>
                 </div>
@@ -227,7 +229,7 @@
             <section class="panel create-card" id="create-card">
               <div class="panel__header">
                 <span class="panel__eyebrow">Cadastro</span>
-                <h2>Nova origem analitica</h2>
+                <h2 id="link-form-title">Nova origem analitica</h2>
               </div>
               <form id="link-form" class="stack">
                 <label class="field">
@@ -246,7 +248,10 @@
                   <span>Tags</span>
                   <input type="text" name="tags" placeholder="loja, qr, whatsapp" />
                 </label>
-                <button type="submit" class="button button--primary">Cadastrar origem</button>
+                <div class="form-actions">
+                  <button id="link-form-submit" type="submit" class="button button--primary">Cadastrar origem</button>
+                  <button id="link-form-cancel" type="button" class="button button--ghost hidden">Cancelar edicao</button>
+                </div>
                 <p id="form-feedback" class="feedback" aria-live="polite"></p>
               </form>
             </section>

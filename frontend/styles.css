@@ -334,6 +334,12 @@ textarea {
   gap: 14px;
 }
 
+.form-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .quick-range {
   display: flex;
   gap: 10px;
@@ -386,6 +392,12 @@ textarea {
   background: var(--panel-strong);
   color: var(--text);
   border-color: var(--line-strong);
+}
+
+.button--danger {
+  color: #b42318;
+  border-color: rgba(180, 35, 24, 0.25);
+  background: #fff5f4;
 }
 
 .trend-chart {
@@ -634,6 +646,12 @@ textarea {
   cursor: pointer;
   color: var(--text);
   text-decoration: none;
+}
+
+.mini-button--danger {
+  color: #b42318;
+  border-color: rgba(180, 35, 24, 0.25);
+  background: #fff5f4;
 }
 
 .feedback {
