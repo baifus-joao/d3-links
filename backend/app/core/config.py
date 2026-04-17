@@ -13,8 +13,20 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @property
+    def sqlalchemy_database_url(self) -> str:
+        url = self.database_url.strip()
+
+        if url.startswith("postgres://"):
+            return url.replace("postgres://", "postgresql+psycopg://", 1)
+
+        if url.startswith("postgresql://") and "+" not in url.split("://", 1)[0]:
+            return url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+        return url
+
+    @property
     def is_sqlite(self) -> bool:
-        return self.database_url.startswith("sqlite")
+        return self.sqlalchemy_database_url.startswith("sqlite")
 
 
 @lru_cache

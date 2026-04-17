@@ -29,3 +29,4 @@ O sistema foi estruturado para separar responsabilidade por camada sem adicionar
 - `AnalyticsService` agora tambem entrega uma visao global para o dashboard principal com top links, tendencia e distribuicao por origem
 - O frontend consome a mesma API e nao depende de framework JS para manter simplicidade operacional
 - O dashboard foi reorganizado em formato SaaS corporativo com topbar, rail lateral, cards de KPI, ranking operacional e drill-down individual
+- A configuracao converte automaticamente `postgres://` e `postgresql://` para `postgresql+psycopg://` em producao para evitar fallback indevido para `psycopg2`

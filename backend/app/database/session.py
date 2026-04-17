@@ -9,7 +9,7 @@ from backend.app.database.base import Base
 settings = get_settings()
 
 engine = create_engine(
-    settings.database_url,
+    settings.sqlalchemy_database_url,
     echo=settings.db_echo,
     future=True,
     connect_args={"check_same_thread": False} if settings.is_sqlite else {},

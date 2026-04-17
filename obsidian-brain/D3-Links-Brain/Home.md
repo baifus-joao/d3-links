@@ -29,5 +29,6 @@
 - Os endpoints de analytics aceitam filtro por `start_date` e `end_date`
 - O painel passa a tratar cada link como entidade analitica com ranking e comparacao por periodo
 - A home agora prioriza leitura executiva: lideres, tendencia, canais, feed recente e drill-down por origem
+- O bootstrap do banco agora normaliza URLs Postgres da Render para usar o driver `psycopg`
 - A camada atual esta pronta para evoluir para autenticacao leve, jobs assincronos e BI mais pesado
 - A raiz da aplicacao (`/`) agora direciona o usuario direto para o dashboard
