@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from datetime import date, datetime
 
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, field_validator
@@ -7,16 +8,29 @@ from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, field_validator
 SHORT_CODE_PATTERN = re.compile(r"^[a-z0-9_-]+$")
 
 
+def slugify_short_code(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    short_code = normalized.strip().lower()
+    short_code = re.sub(r"[\s/]+", "-", short_code)
+    short_code = re.sub(r"[^a-z0-9_-]+", "-", short_code)
+    short_code = re.sub(r"-{2,}", "-", short_code).strip("-_")
+    return short_code
+
+
 class LinkCreate(BaseModel):
     original_url: AnyHttpUrl
-    short_code: str = Field(min_length=2, max_length=120)
+    short_code: str = Field()
     description: str | None = Field(default=None, max_length=1000)
     tags: list[str] = Field(default_factory=list)
 
-    @field_validator("short_code")
+    @field_validator("short_code", mode="before")
     @classmethod
     def normalize_short_code(cls, value: str) -> str:
-        short_code = value.strip().lower()
+        short_code = slugify_short_code(str(value))
+        if len(short_code) < 2:
+            raise ValueError("short_code precisa gerar pelo menos 2 caracteres validos")
+        if len(short_code) > 120:
+            raise ValueError("short_code nao pode ultrapassar 120 caracteres")
         if not SHORT_CODE_PATTERN.match(short_code):
             raise ValueError("short_code deve conter apenas letras minusculas, numeros, hifen ou underline")
         return short_code

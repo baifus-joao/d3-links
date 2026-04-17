@@ -44,6 +44,18 @@ const refs = {
   formFeedback: document.querySelector("#form-feedback"),
 };
 
+function slugifyShortCode(value) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s/]+/g, "-")
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^[-_]+|[-_]+$/g, "");
+}
+
 function initDefaultPeriod() {
   const today = new Date();
   const start = new Date(today);
@@ -65,7 +77,7 @@ async function api(path, options = {}) {
     let detail = "Falha ao processar a requisicao.";
     try {
       const payload = await response.json();
-      detail = payload.detail || detail;
+      detail = formatApiDetail(payload.detail) || detail;
     } catch (error) {
       detail = response.statusText || detail;
     }
@@ -77,6 +89,23 @@ async function api(path, options = {}) {
   }
 
   return response.json();
+}
+
+function formatApiDetail(detail) {
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        const loc = Array.isArray(item.loc) ? item.loc.filter((part) => part !== "body").join(".") : "";
+        return loc ? `${loc}: ${item.msg}` : item.msg;
+      })
+      .join(" | ");
+  }
+
+  if (typeof detail === "object" && detail !== null) {
+    return detail.message || JSON.stringify(detail);
+  }
+
+  return String(detail || "");
 }
 
 function toInputDate(value) {
@@ -494,9 +523,11 @@ refs.linkForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const formData = new FormData(refs.linkForm);
+  const normalizedShortCode = slugifyShortCode(String(formData.get("short_code") || ""));
+  refs.linkForm.elements.namedItem("short_code").value = normalizedShortCode;
   const payload = {
     original_url: formData.get("original_url"),
-    short_code: formData.get("short_code"),
+    short_code: normalizedShortCode,
     description: formData.get("description") || null,
     tags: String(formData.get("tags") || "")
       .split(",")
