@@ -44,7 +44,7 @@ class AnalyticsService:
         return LinkStats(
             link=self.link_service.serialize_summary(link),
             total_clicks=total_clicks,
-            clicks_by_day=[DailyClicks(date=date.fromisoformat(day), clicks=clicks) for day, clicks in daily],
+            clicks_by_day=[DailyClicks(date=self._coerce_grouped_day(day), clicks=clicks) for day, clicks in daily],
             clicks_by_device=[DimensionClicks(label=label, clicks=clicks) for label, clicks in device],
             clicks_by_source=[DimensionClicks(label=label, clicks=clicks) for label, clicks in source],
             recent_clicks=[ClickRead.model_validate(click) for click in recent],
@@ -184,7 +184,7 @@ class AnalyticsService:
                 top_source=top_source[0],
                 top_source_clicks=top_source[1],
             ),
-            clicks_by_day=[DailyClicks(date=date.fromisoformat(day), clicks=clicks) for day, clicks in daily],
+            clicks_by_day=[DailyClicks(date=self._coerce_grouped_day(day), clicks=clicks) for day, clicks in daily],
             clicks_by_source=[DimensionClicks(label=label, clicks=clicks) for label, clicks in source],
             clicks_by_device=[DimensionClicks(label=label, clicks=clicks) for label, clicks in device],
             top_links=top_links,
@@ -218,3 +218,10 @@ class AnalyticsService:
         previous_end = start_date - timedelta(days=1)
         previous_start = previous_end - timedelta(days=span - 1)
         return previous_start, previous_end
+
+    def _coerce_grouped_day(self, value: date | datetime | str) -> date:
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        return date.fromisoformat(value)
